@@ -16,7 +16,6 @@
 # Author:
 #   Takahiro Poly Horikawa <horikawa.takahiro@gmail.com>
 
-request = require 'request'
 moment = require 'moment'
 
 REPL_API_KEY = process.env.HUBOT_REPL_API_KEY
@@ -39,29 +38,30 @@ class ReplEngine
       callback null, @replUserIdMap[userName]
       return
 
-    body =
+    body = JSON.stringify(
       botId: REPL_BOT_ID
-    options =
-      url: REGISTRATION_URL
-      method: 'POST'
-      headers:
-        'x-api-key': REPL_API_KEY
-      json: body
+    )
 
-    request options, (err, res, json) =>
-      @robot.logger.debug "docomo registration API response", err, json
-      if err?
-        callback err
-        return
-      if json.error?
-        callback json.error
-        return
-      userId = json.appUserId
-      @replUserIdMap[userName] = userId
-      callback err, userId
+    @robot
+      .http(REGISTRATION_URL)
+      .header('Accept', 'application/json')
+      .header('x-api-key', REPL_API_KEY)
+      .header('Content-Type', 'application/json')
+      .post(body) (err, res, body) =>
+        @robot.logger.debug "docomo registration API response", err, body
+        if err?
+          callback err
+          return
+        json = JSON.parse body
+        if json? && json.error?
+          callback json.error
+          return
+        userId = json.appUserId
+        @replUserIdMap[userName] = userId
+        callback err, userId
 
   dialogue: (replUserId, input, callback) ->
-    body =
+    body = JSON.stringify(
       appUserId: replUserId
       botId: REPL_BOT_ID
       voiceText: input
@@ -69,22 +69,23 @@ class ReplEngine
       initTopicId: REPL_TOPIC_ID
       appRecvTime: @now()
       appSendTime: @now()
-    options =
-      url: DIALOGUE_URL
-      method: 'POST'
-      headers:
-        'x-api-key': REPL_API_KEY
-      json: body
-    request options, (err, res, json) =>
-      @robot.logger.debug "docomo dialogue API response", err, json
-      if err?
-        callback err
-        return
-      if json.error?
-        callback json.error
-        return
-      output = json.systemText.expression
-      callback err, output
+    )
+    @robot
+      .http(DIALOGUE_URL)
+      .header('Accept', 'application/json')
+      .header('x-api-key', REPL_API_KEY)
+      .header('Content-Type', 'application/json')
+      .post(body) (err, res, body) =>
+        @robot.logger.debug "docomo dialogue API response", err, body
+        if err?
+          callback err
+          return
+        json = JSON.parse body
+        if json && json.error?
+          callback json.error
+          return
+        output = json.systemText.expression
+        callback err, output
 
 module.exports = (robot) ->
   REMOVE_REG_EXP = new RegExp("@?#{robot.name}:?\\s*", "g")
