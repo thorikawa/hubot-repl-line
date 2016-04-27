@@ -9,6 +9,6 @@
     "HUBOT_REPL_TOPIC_ID": ""
   },
   "addons": [
-    "fixie"
+    "fixie:tricycle"
   ]
 }
