@@ -18,11 +18,6 @@
 
 request = require 'request'
 moment = require 'moment'
-{LineStickerListener} = require 'hubot-line'
-
-module.exports = (robot) ->
-  robot.listeners.push new LineStickerListener robot, (() -> true), (res) ->
-    res.send "Receiced a sticker. id: #{res.message.id} STKPKGID: #{res.message.STKPKGID}"
 
 REPL_API_KEY = process.env.HUBOT_REPL_API_KEY
 REPL_BOT_ID = process.env.HUBOT_REPL_BOT_ID
@@ -95,7 +90,7 @@ module.exports = (robot) ->
   REMOVE_REG_EXP = new RegExp("@?#{robot.name}:?\\s*", "g")
   replEngine = new ReplEngine robot
 
-  robot.respond /(\S+)/i, (msg) ->
+  robot.hear /(\S+)/i, (msg) ->
     name = msg.message.user.name
     message = msg.message.text
     message = message.replace(REMOVE_REG_EXP, "")
